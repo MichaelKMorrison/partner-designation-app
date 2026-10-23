@@ -1,5 +1,7 @@
 # Partner Designation Lookup App
 
+![Results preview](media/results-preview.png)
+
 Web app + API that takes customer names from an Excel/CSV file or JSON payload, queries the Microsoft Marketplace Partner Directory backend, and returns matched partner designation data as JSON or Excel.
 
 ## What it does
