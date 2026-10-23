@@ -6,7 +6,7 @@ Web app + API that takes customer names from an Excel/CSV file or JSON payload, 
 
 - Accepts input from:
   - Web UI text list
-  - Web UI file upload (`.xlsx`, `.xls`, `.csv`)
+  - Web UI file upload (`.xlsx`, `.csv`)
   - API (`POST /api/lookup` and `POST /api/lookup/file`)
 - Queries:
   - `https://main.prod.marketplacepartnerdirectory.azure.com/api/partners`
@@ -46,7 +46,7 @@ Optional output query:
 
 Fields:
 
-- `file` (required): `.xlsx`, `.xls`, or `.csv`
+- `file` (required): `.xlsx` or `.csv`
 - `columnName` (optional): header name containing customer names
 - `designations` (optional): comma-separated codes
 - `outputFormat` (optional): set to `xlsx` to return Excel file
@@ -75,3 +75,5 @@ Then open `http://localhost:3000`.
 
 - This backend appears to be an undocumented/private service and may change without notice.
 - Matching is search-based and can return multiple partner candidates per customer name.
+- `xlsx` (SheetJS) was removed due unresolved high-severity advisories; this app now uses `read-excel-file` and `write-excel-file`.
+- Legacy `.xls` upload is intentionally not supported.

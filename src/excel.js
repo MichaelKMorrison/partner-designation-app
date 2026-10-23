@@ -1,36 +1,36 @@
-const XLSX = require("xlsx");
+const path = require("path");
 
-function readCustomerNamesFromWorkbook(buffer, columnName) {
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  const firstSheetName = workbook.SheetNames[0];
+const { parse } = require("csv-parse/sync");
+const readXlsxFile = require("read-excel-file/node");
+const writeXlsxFile = require("write-excel-file/node");
 
-  if (!firstSheetName) {
-    throw new Error("Workbook has no sheets.");
+function resolveColumnIndex(headerRow, columnName) {
+  if (!columnName) {
+    return 0;
   }
 
-  const worksheet = workbook.Sheets[firstSheetName];
-  const matrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+  const index = headerRow.findIndex(
+    (header) => header.localeCompare(columnName, undefined, { sensitivity: "accent" }) === 0,
+  );
 
+  if (index < 0) {
+    throw new Error(`Column "${columnName}" not found. Available columns: ${headerRow.join(", ")}`);
+  }
+
+  return index;
+}
+
+function parseCustomerNamesFromMatrix(matrix, columnName) {
   if (!Array.isArray(matrix) || matrix.length < 2) {
-    throw new Error("Workbook must include a header row and at least one data row.");
+    throw new Error("File must include a header row and at least one data row.");
   }
 
-  const headerRow = matrix[0].map((value) => String(value || "").trim());
-  let columnIndex = 0;
-
-  if (columnName) {
-    columnIndex = headerRow.findIndex(
-      (header) => header.localeCompare(columnName, undefined, { sensitivity: "accent" }) === 0,
-    );
-
-    if (columnIndex < 0) {
-      throw new Error(`Column "${columnName}" not found. Available columns: ${headerRow.join(", ")}`);
-    }
-  }
+  const headerRow = matrix[0].map((value) => String(value ?? "").trim());
+  const columnIndex = resolveColumnIndex(headerRow, columnName);
 
   const names = matrix
     .slice(1)
-    .map((row) => String(row[columnIndex] || "").trim())
+    .map((row) => String(row[columnIndex] ?? "").trim())
     .filter(Boolean);
 
   if (names.length === 0) {
@@ -38,9 +38,41 @@ function readCustomerNamesFromWorkbook(buffer, columnName) {
   }
 
   return {
-    sheetName: firstSheetName,
     columnName: headerRow[columnIndex] || "Column1",
     names,
+  };
+}
+
+function toCell(value) {
+  if (typeof value === "number") {
+    return { type: Number, value };
+  }
+
+  return { type: String, value: String(value ?? "") };
+}
+
+async function readCustomerNamesFromWorkbook(buffer, columnName, fileName = "") {
+  const extension = path.extname(fileName).toLowerCase();
+  let matrix;
+  let sheetName = "Sheet1";
+
+  if (extension === ".csv") {
+    const parsed = parse(buffer.toString("utf8"), {
+      skip_empty_lines: true,
+      trim: true,
+      relax_column_count: true,
+    });
+    matrix = parsed;
+    sheetName = "CSV";
+  } else {
+    matrix = await readXlsxFile(buffer);
+  }
+
+  const parsed = parseCustomerNamesFromMatrix(matrix, columnName);
+  return {
+    sheetName,
+    columnName: parsed.columnName,
+    names: parsed.names,
   };
 }
 
@@ -83,8 +115,18 @@ function flattenResults(results) {
   return rows;
 }
 
-function buildWorkbookBuffer(results) {
-  const workbook = XLSX.utils.book_new();
+function toSheetRows(objects) {
+  if (objects.length === 0) {
+    return [[toCell("No data")]];
+  }
+
+  const headers = Object.keys(objects[0]);
+  const headerRow = headers.map((header) => toCell(header));
+  const valueRows = objects.map((item) => headers.map((header) => toCell(item[header])));
+  return [headerRow, ...valueRows];
+}
+
+async function buildWorkbookBuffer(results) {
   const detailedRows = flattenResults(results);
   const summaryRows = results.map((result) => ({
     customerName: result.customerName,
@@ -95,13 +137,20 @@ function buildWorkbookBuffer(results) {
     error: result.error || "",
   }));
 
-  const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
-  const detailSheet = XLSX.utils.json_to_sheet(detailedRows);
+  const workbook = writeXlsxFile(
+    [
+      {
+        sheet: "Summary",
+        data: toSheetRows(summaryRows),
+      },
+      {
+        sheet: "Matches",
+        data: toSheetRows(detailedRows),
+      },
+    ],
+  );
 
-  XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
-  XLSX.utils.book_append_sheet(workbook, detailSheet, "Matches");
-
-  return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+  return workbook.toBuffer();
 }
 
 module.exports = {

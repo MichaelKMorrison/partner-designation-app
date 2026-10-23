@@ -50,8 +50,8 @@ function shouldExportXlsx(req) {
   return String(req.query.output || req.body.outputFormat || "").toLowerCase() === "xlsx";
 }
 
-function sendXlsx(res, results) {
-  const workbookBuffer = buildWorkbookBuffer(results);
+async function sendXlsx(res, results) {
+  const workbookBuffer = await buildWorkbookBuffer(results);
   const fileName = `partner-designations-${Date.now()}.xlsx`;
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
@@ -85,7 +85,7 @@ app.post("/api/lookup", async (req, res) => {
     const payload = await runLookup(customers, designationFilter);
 
     if (shouldExportXlsx(req)) {
-      sendXlsx(res, payload.results);
+      await sendXlsx(res, payload.results);
       return;
     }
 
@@ -105,7 +105,7 @@ app.post("/api/lookup/file", upload.single("file"), async (req, res) => {
     }
 
     const designationFilter = parseDesignationFilter(req.body.designations);
-    const parsed = readCustomerNamesFromWorkbook(req.file.buffer, req.body.columnName);
+    const parsed = await readCustomerNamesFromWorkbook(req.file.buffer, req.body.columnName, req.file.originalname);
     const payload = await runLookup(parsed.names, designationFilter);
     payload.input = {
       mode: "file",
@@ -115,7 +115,7 @@ app.post("/api/lookup/file", upload.single("file"), async (req, res) => {
     };
 
     if (shouldExportXlsx(req)) {
-      sendXlsx(res, payload.results);
+      await sendXlsx(res, payload.results);
       return;
     }
 
