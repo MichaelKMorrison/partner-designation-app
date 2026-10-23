@@ -32,7 +32,8 @@ Open: `http://localhost:3000`
 ```json
 {
   "customers": ["Arrow", "Contoso"],
-  "designations": ["AzureDataAICompetency", "SecurityCompetency"]
+  "designations": ["AzureDataAICompetency", "SecurityCompetency"],
+  "includeAllMatches": false
 }
 ```
 
@@ -49,6 +50,7 @@ Fields:
 - `file` (required): `.xlsx` or `.csv`
 - `columnName` (optional): header name containing customer names
 - `designations` (optional): comma-separated codes
+- `includeAllMatches` (optional): `true` to include fuzzy/related partner names
 - `outputFormat` (optional): set to `xlsx` to return Excel file
 
 ## Designation filter codes
@@ -77,3 +79,4 @@ Then open `http://localhost:3000`.
 - Matching is search-based and can return multiple partner candidates per customer name.
 - `xlsx` (SheetJS) was removed due unresolved high-severity advisories; this app now uses `read-excel-file` and `write-excel-file`.
 - Legacy `.xls` upload is intentionally not supported.
+- Default behavior is exact company-name matching only (normalized exact match); set `includeAllMatches=true` if you want broad fuzzy candidates.

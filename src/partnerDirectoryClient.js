@@ -17,6 +17,16 @@ function toReadableDesignation(code) {
   return designationLabels[code] || code;
 }
 
+function normalizeName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function isExactNameMatch(inputName, partnerName) {
+  return normalizeName(inputName) === normalizeName(partnerName);
+}
+
 function toCsv(values) {
   if (!Array.isArray(values) || values.length === 0) {
     return "";
@@ -64,11 +74,19 @@ function transformPartner(partner) {
   const trainingDesignations = partner.trainingServicesPartnerDesignations || [];
   const allDesignations = [...solutionDesignations, ...supportDesignations, ...trainingDesignations];
 
+  const location =
+    typeof partner.location === "string"
+      ? partner.location
+      : [partner.location?.city, partner.location?.state, partner.location?.country]
+          .map((value) => String(value || "").trim())
+          .filter(Boolean)
+          .join(", ");
+
   return {
     partnerId: partner.partnerId || "",
     partnerRecordId: partner.id || "",
     partnerName: partner.name || "",
-    location: partner.location || "",
+    location,
     solutionsPartnerDesignations: solutionDesignations,
     solutionsPartnerDesignationNames: solutionDesignations.map(toReadableDesignation),
     supportServicesDesignations: supportDesignations,
@@ -83,8 +101,7 @@ function pickBestMatch(customerName, matches) {
     return null;
   }
 
-  const normalizedNeedle = customerName.trim().toLowerCase();
-  const exact = matches.find((match) => match.partnerName.trim().toLowerCase() === normalizedNeedle);
+  const exact = matches.find((match) => isExactNameMatch(customerName, match.partnerName));
   if (exact) {
     return exact;
   }
@@ -132,12 +149,28 @@ async function fetchMatchesForCustomer(customerName, options) {
     pageNumber += 1;
   }
 
-  const matches = [...deduped.values()];
+  const allMatches = [...deduped.values()];
+  const includeAllMatches = Boolean(options.includeAllMatches);
+  const exactMatches = allMatches.filter((match) => isExactNameMatch(customerName, match.partnerName));
+  const matches = includeAllMatches ? allMatches : exactMatches;
+  const hasExactMatch = exactMatches.length > 0;
+
+  const status = includeAllMatches
+    ? matches.length > 0
+      ? "matched"
+      : "no_match"
+    : hasExactMatch
+      ? "matched"
+      : allMatches.length > 0
+        ? "no_exact_match"
+        : "no_match";
+
   return {
     customerName,
-    status: matches.length > 0 ? "matched" : "no_match",
+    status,
     bestMatch: pickBestMatch(customerName, matches),
     matchCount: matches.length,
+    candidateCount: allMatches.length,
     matches,
   };
 }

@@ -80,15 +80,13 @@ function flattenResults(results) {
   const rows = [];
 
   for (const result of results) {
-    if (result.matches.length === 0) {
+    const match = result.bestMatch;
+    if (!match) {
       rows.push({
         customerName: result.customerName,
         status: result.status,
-        partnerName: "",
-        partnerId: "",
-        location: "",
+        candidateCount: result.candidateCount || 0,
         solutionsPartnerDesignations: "",
-        solutionsPartnerDesignationNames: "",
         supportServicesDesignations: "",
         trainingServicesPartnerDesignations: "",
         designationCount: 0,
@@ -96,20 +94,15 @@ function flattenResults(results) {
       continue;
     }
 
-    for (const match of result.matches) {
-      rows.push({
-        customerName: result.customerName,
-        status: result.status,
-        partnerName: match.partnerName,
-        partnerId: match.partnerId,
-        location: match.location,
-        solutionsPartnerDesignations: match.solutionsPartnerDesignations.join(" | "),
-        solutionsPartnerDesignationNames: match.solutionsPartnerDesignationNames.join(" | "),
-        supportServicesDesignations: match.supportServicesDesignations.join(" | "),
-        trainingServicesPartnerDesignations: match.trainingServicesPartnerDesignations.join(" | "),
-        designationCount: match.designationCount,
-      });
-    }
+    rows.push({
+      customerName: result.customerName,
+      status: result.status,
+      candidateCount: result.candidateCount || 0,
+      solutionsPartnerDesignations: match.solutionsPartnerDesignationNames.join(" | "),
+      supportServicesDesignations: match.supportServicesDesignations.join(" | "),
+      trainingServicesPartnerDesignations: match.trainingServicesPartnerDesignations.join(" | "),
+      designationCount: match.designationCount,
+    });
   }
 
   return rows;
@@ -132,7 +125,7 @@ async function buildWorkbookBuffer(results) {
     customerName: result.customerName,
     status: result.status,
     matchCount: result.matchCount,
-    bestMatch: result.bestMatch?.partnerName || "",
+    candidateCount: result.candidateCount || 0,
     bestMatchDesignationCount: result.bestMatch?.designationCount || 0,
     error: result.error || "",
   }));

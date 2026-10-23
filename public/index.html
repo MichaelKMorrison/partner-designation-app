@@ -40,6 +40,10 @@
             <button type="submit">Run lookup</button>
             <button id="download-xlsx-from-text" type="button">Download Excel from this list</button>
           </div>
+          <label for="includeAllMatches" class="inline-checkbox">
+            <input id="includeAllMatches" name="includeAllMatches" type="checkbox" />
+            Include fuzzy matches (off = exact company name only)
+          </label>
         </form>
       </section>
 
@@ -61,6 +65,10 @@
             <button type="submit">Run lookup</button>
             <button id="download-xlsx-from-file" type="button">Download Excel from file</button>
           </div>
+          <label for="includeAllMatchesFile" class="inline-checkbox">
+            <input id="includeAllMatchesFile" name="includeAllMatchesFile" type="checkbox" />
+            Include fuzzy matches (off = exact company name only)
+          </label>
         </form>
       </section>
 
@@ -69,13 +77,15 @@
         <pre><code>POST /api/lookup
 {
   "customers": ["Arrow", "Contoso"],
-  "designations": ["AzureDataAICompetency"]
+  "designations": ["AzureDataAICompetency"],
+  "includeAllMatches": false
 }
 
 POST /api/lookup/file (multipart/form-data)
 - file: .xlsx/.csv
 - columnName: optional
 - designations: optional comma-separated list
+- includeAllMatches: optional true/false
 - outputFormat: "xlsx" to force file export
 </code></pre>
       </section>
@@ -92,8 +102,6 @@ POST /api/lookup/file (multipart/form-data)
               <tr>
                 <th>Customer</th>
                 <th>Status</th>
-                <th>Partner</th>
-                <th>Location</th>
                 <th>Solutions Designations</th>
                 <th>Support Designations</th>
                 <th>Training Designations</th>

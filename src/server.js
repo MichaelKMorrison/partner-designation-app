@@ -50,6 +50,19 @@ function shouldExportXlsx(req) {
   return String(req.query.output || req.body.outputFormat || "").toLowerCase() === "xlsx";
 }
 
+function parseBooleanFlag(value, defaultValue = false) {
+  if (value === undefined || value === null || value === "") {
+    return defaultValue;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
 async function sendXlsx(res, results) {
   const workbookBuffer = await buildWorkbookBuffer(results);
   const fileName = `partner-designations-${Date.now()}.xlsx`;
@@ -58,14 +71,18 @@ async function sendXlsx(res, results) {
   res.send(workbookBuffer);
 }
 
-async function runLookup(customerNames, designationFilter) {
-  const results = await lookupCustomers(customerNames, { designations: designationFilter });
+async function runLookup(customerNames, designationFilter, includeAllMatches) {
+  const results = await lookupCustomers(customerNames, {
+    designations: designationFilter,
+    includeAllMatches,
+  });
   const completedAt = new Date().toISOString();
   return {
     completedAt,
     customerCount: customerNames.length,
     uniqueCustomerCount: new Set(customerNames.map((name) => name.toLowerCase())).size,
     designationFilter,
+    includeAllMatches,
     results,
   };
 }
@@ -82,7 +99,8 @@ app.post("/api/lookup", async (req, res) => {
   try {
     const customers = parseCustomerList(req.body.customers);
     const designationFilter = parseDesignationFilter(req.body.designations);
-    const payload = await runLookup(customers, designationFilter);
+    const includeAllMatches = parseBooleanFlag(req.query.includeAllMatches ?? req.body.includeAllMatches, false);
+    const payload = await runLookup(customers, designationFilter, includeAllMatches);
 
     if (shouldExportXlsx(req)) {
       await sendXlsx(res, payload.results);
@@ -106,7 +124,8 @@ app.post("/api/lookup/file", upload.single("file"), async (req, res) => {
 
     const designationFilter = parseDesignationFilter(req.body.designations);
     const parsed = await readCustomerNamesFromWorkbook(req.file.buffer, req.body.columnName, req.file.originalname);
-    const payload = await runLookup(parsed.names, designationFilter);
+    const includeAllMatches = parseBooleanFlag(req.query.includeAllMatches ?? req.body.includeAllMatches, false);
+    const payload = await runLookup(parsed.names, designationFilter, includeAllMatches);
     payload.input = {
       mode: "file",
       fileName: req.file.originalname,

@@ -128,6 +128,18 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--cp-text-muted);
+  font-weight: 400;
+}
+
+.inline-checkbox input {
+  width: auto;
+}
+
 button {
   border: 1px solid var(--cp-accent);
   background: var(--cp-accent);

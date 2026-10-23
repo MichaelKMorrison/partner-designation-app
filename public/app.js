@@ -34,47 +34,24 @@ function renderResults(payload) {
   latestPayload = payload;
   resetTable();
 
-  const flattened = payload.results.flatMap((result) => {
-    if (result.matches.length === 0) {
-      return [
-        {
-          customerName: result.customerName,
-          status: result.status,
-          partnerName: "",
-          location: "",
-          solutionsPartnerDesignations: [],
-          supportServicesDesignations: [],
-          trainingServicesPartnerDesignations: [],
-        },
-      ];
-    }
-
-    return result.matches.map((match) => ({
-      customerName: result.customerName,
-      status: result.status,
-      partnerName: match.partnerName,
-      location: match.location,
-      solutionsPartnerDesignations: match.solutionsPartnerDesignationNames || match.solutionsPartnerDesignations,
-      supportServicesDesignations: match.supportServicesDesignations,
-      trainingServicesPartnerDesignations: match.trainingServicesPartnerDesignations,
-    }));
-  });
-
-  flattened.forEach((row) => {
+  payload.results.forEach((result) => {
+    const match = result.bestMatch;
     const tr = document.createElement("tr");
-    appendCell(tr, row.customerName);
-    appendCell(tr, row.status);
-    appendCell(tr, row.partnerName);
-    appendCell(tr, row.location);
-    appendCell(tr, (row.solutionsPartnerDesignations || []).join(" | "));
-    appendCell(tr, (row.supportServicesDesignations || []).join(" | "));
-    appendCell(tr, (row.trainingServicesPartnerDesignations || []).join(" | "));
+    appendCell(tr, result.customerName);
+    appendCell(tr, result.status);
+    appendCell(
+      tr,
+      (match?.solutionsPartnerDesignationNames || match?.solutionsPartnerDesignations || []).join(" | "),
+    );
+    appendCell(tr, (match?.supportServicesDesignations || []).join(" | "));
+    appendCell(tr, (match?.trainingServicesPartnerDesignations || []).join(" | "));
     tableBody.appendChild(tr);
   });
 
   const matched = payload.results.filter((result) => result.status === "matched").length;
+  const noExact = payload.results.filter((result) => result.status === "no_exact_match").length;
   setStatus(
-    `Done. Processed ${payload.customerCount} inputs (${payload.uniqueCustomerCount} unique). Matches found for ${matched}.`,
+    `Done. Processed ${payload.customerCount} inputs (${payload.uniqueCustomerCount} unique). Exact matches for ${matched}. No exact match for ${noExact}.`,
   );
   downloadJsonButton.disabled = false;
 }
@@ -122,12 +99,13 @@ textForm.addEventListener("submit", async (event) => {
     .map((value) => value.trim())
     .filter(Boolean);
   const designations = parseDesignations(document.getElementById("designationFilter").value || "");
+  const includeAllMatches = document.getElementById("includeAllMatches").checked;
 
   try {
     const payload = await fetchJson("/api/lookup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customers: customerNames, designations }),
+      body: JSON.stringify({ customers: customerNames, designations, includeAllMatches }),
     });
     renderResults(payload);
   } catch (error) {
@@ -142,6 +120,7 @@ fileForm.addEventListener("submit", async (event) => {
   const fileInput = document.getElementById("file");
   const columnName = document.getElementById("columnName").value.trim();
   const designations = document.getElementById("designationFilterFile").value.trim();
+  const includeAllMatches = document.getElementById("includeAllMatchesFile").checked;
   const file = fileInput.files[0];
 
   if (!file) {
@@ -157,6 +136,7 @@ fileForm.addEventListener("submit", async (event) => {
   if (designations) {
     formData.set("designations", designations);
   }
+  formData.set("includeAllMatches", String(includeAllMatches));
 
   try {
     const payload = await fetchJson("/api/lookup/file", {
@@ -187,6 +167,7 @@ downloadXlsxFromTextButton.addEventListener("click", async () => {
     .map((value) => value.trim())
     .filter(Boolean);
   const designations = parseDesignations(document.getElementById("designationFilter").value || "");
+  const includeAllMatches = document.getElementById("includeAllMatches").checked;
 
   if (customerNames.length === 0) {
     setStatus("Add at least one customer name before exporting.", true);
@@ -199,7 +180,7 @@ downloadXlsxFromTextButton.addEventListener("click", async () => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customers: customerNames, designations }),
+        body: JSON.stringify({ customers: customerNames, designations, includeAllMatches }),
       },
       "partner-designations.xlsx",
     );
@@ -213,6 +194,7 @@ downloadXlsxFromFileButton.addEventListener("click", async () => {
   const fileInput = document.getElementById("file");
   const columnName = document.getElementById("columnName").value.trim();
   const designations = document.getElementById("designationFilterFile").value.trim();
+  const includeAllMatches = document.getElementById("includeAllMatchesFile").checked;
   const file = fileInput.files[0];
 
   if (!file) {
@@ -229,6 +211,7 @@ downloadXlsxFromFileButton.addEventListener("click", async () => {
   if (designations) {
     formData.set("designations", designations);
   }
+  formData.set("includeAllMatches", String(includeAllMatches));
 
   try {
     await requestXlsx("/api/lookup/file", { method: "POST", body: formData }, "partner-designations.xlsx");
