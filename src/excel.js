@@ -89,6 +89,8 @@ function flattenResults(results) {
         solutionsPartnerDesignations: "",
         supportServicesDesignations: "",
         trainingServicesPartnerDesignations: "",
+        specializations: "",
+        specializationCount: 0,
         designationCount: 0,
       });
       continue;
@@ -101,6 +103,8 @@ function flattenResults(results) {
       solutionsPartnerDesignations: match.solutionsPartnerDesignationNames.join(" | "),
       supportServicesDesignations: match.supportServicesDesignations.join(" | "),
       trainingServicesPartnerDesignations: match.trainingServicesPartnerDesignations.join(" | "),
+      specializations: match.specializations.join(" | "),
+      specializationCount: match.specializationCount,
       designationCount: match.designationCount,
     });
   }
@@ -127,6 +131,7 @@ async function buildWorkbookBuffer(results) {
     matchCount: result.matchCount,
     candidateCount: result.candidateCount || 0,
     bestMatchDesignationCount: result.bestMatch?.designationCount || 0,
+    bestMatchSpecializationCount: result.bestMatch?.specializationCount || 0,
     error: result.error || "",
   }));
 

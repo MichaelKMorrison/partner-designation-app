@@ -10,6 +10,7 @@ const designationLabels = {
   BizAppsCompetency: "Business Applications",
   ModernCompetency: "Modern Work",
   SecurityCompetency: "Security",
+  AzureDigiAppCompetency: "Digital & App Innovation (Azure)",
   DigitalAppInnovationCompetency: "Digital & App Innovation (Azure)",
 };
 
@@ -81,6 +82,11 @@ function transformPartner(partner) {
           .map((value) => String(value || "").trim())
           .filter(Boolean)
           .join(", ");
+  const specializations = (partner.programQualificationsAsp || []).map((item) => String(item || "").trim()).filter(Boolean);
+  const specializationCounts = specializations.reduce((acc, specialization) => {
+    acc[specialization] = (acc[specialization] || 0) + 1;
+    return acc;
+  }, {});
 
   return {
     partnerId: partner.partnerId || "",
@@ -91,6 +97,9 @@ function transformPartner(partner) {
     solutionsPartnerDesignationNames: solutionDesignations.map(toReadableDesignation),
     supportServicesDesignations: supportDesignations,
     trainingServicesPartnerDesignations: trainingDesignations,
+    specializations,
+    specializationCounts,
+    specializationCount: specializations.length,
     allDesignations,
     designationCount: allDesignations.length,
   };
@@ -106,6 +115,7 @@ function pickBestMatch(customerName, matches) {
     return exact;
   }
 
+  const normalizedNeedle = customerName.trim().toLowerCase();
   const startsWith = matches.find((match) => match.partnerName.trim().toLowerCase().startsWith(normalizedNeedle));
   if (startsWith) {
     return startsWith;

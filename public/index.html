@@ -48,6 +48,29 @@
       </section>
 
       <section class="card">
+        <h2>Results</h2>
+        <p id="status">No results yet.</p>
+        <div class="actions">
+          <button id="download-json" type="button" disabled>Download JSON</button>
+        </div>
+        <div class="table-wrap">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Solutions Designations</th>
+                <th>Support Designations</th>
+                <th>Training Designations</th>
+                <th>Specializations</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
         <h2>Lookup from Excel/CSV file</h2>
         <form id="file-form">
           <label for="file">File (.xlsx, .csv)</label>
@@ -88,28 +111,6 @@ POST /api/lookup/file (multipart/form-data)
 - includeAllMatches: optional true/false
 - outputFormat: "xlsx" to force file export
 </code></pre>
-      </section>
-
-      <section class="card">
-        <h2>Results</h2>
-        <p id="status">No results yet.</p>
-        <div class="actions">
-          <button id="download-json" type="button" disabled>Download JSON</button>
-        </div>
-        <div class="table-wrap">
-          <table id="results-table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Status</th>
-                <th>Solutions Designations</th>
-                <th>Support Designations</th>
-                <th>Training Designations</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
       </section>
     </main>
 

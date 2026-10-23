@@ -13,6 +13,7 @@ Web app + API that takes customer names from an Excel/CSV file or JSON payload, 
 - Returns:
   - JSON response with matches per customer
   - Downloadable Excel workbook with `Summary` and `Matches` sheets
+  - Designation and specialization details (including specialization count) for the matched prospect
 
 ## Quick start
 

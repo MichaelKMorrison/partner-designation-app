@@ -45,6 +45,7 @@ function renderResults(payload) {
     );
     appendCell(tr, (match?.supportServicesDesignations || []).join(" | "));
     appendCell(tr, (match?.trainingServicesPartnerDesignations || []).join(" | "));
+    appendCell(tr, (match?.specializations || []).join(" | "));
     tableBody.appendChild(tr);
   });
 
