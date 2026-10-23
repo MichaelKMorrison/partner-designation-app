@@ -1,0 +1,21 @@
+{
+  "name": "partner-designation-app",
+  "version": "1.0.0",
+  "description": "Web app and API for partner designation lookup via marketplace partner directory backend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "echo \"No tests configured\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.3.0",
+    "multer": "^2.5.0",
+    "p-limit": "^7.3.3",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Partner Designation Lookup</title>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header-card">
+        <h1>Partner Designation Lookup</h1>
+        <p>
+          Upload customer names from Excel/CSV or send them through the API, then export the matched
+          Microsoft partner designations as JSON or Excel.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Lookup from text list</h2>
+        <form id="text-form">
+          <label for="customerNames">Customer names (one per line)</label>
+          <textarea id="customerNames" name="customerNames" rows="8" required></textarea>
+          <label for="designationFilter">Optional designation codes (comma-separated)</label>
+          <input
+            id="designationFilter"
+            name="designationFilter"
+            placeholder="AzureDataAICompetency,SecurityCompetency"
+            type="text"
+          />
+          <div class="actions">
+            <button type="submit">Run lookup</button>
+            <button id="download-xlsx-from-text" type="button">Download Excel from this list</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Lookup from Excel/CSV file</h2>
+        <form id="file-form">
+          <label for="file">File (.xlsx, .xls, .csv)</label>
+          <input id="file" name="file" type="file" accept=".xlsx,.xls,.csv" required />
+          <label for="columnName">Optional column name (defaults to first column)</label>
+          <input id="columnName" name="columnName" placeholder="CustomerName" type="text" />
+          <label for="designationFilterFile">Optional designation codes (comma-separated)</label>
+          <input
+            id="designationFilterFile"
+            name="designationFilterFile"
+            placeholder="AzureDataAICompetency,SecurityCompetency"
+            type="text"
+          />
+          <div class="actions">
+            <button type="submit">Run lookup</button>
+            <button id="download-xlsx-from-file" type="button">Download Excel from file</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>API endpoints</h2>
+        <pre><code>POST /api/lookup
+{
+  "customers": ["Arrow", "Contoso"],
+  "designations": ["AzureDataAICompetency"]
+}
+
+POST /api/lookup/file (multipart/form-data)
+- file: .xlsx/.csv
+- columnName: optional
+- designations: optional comma-separated list
+- outputFormat: "xlsx" to force file export
+</code></pre>
+      </section>
+
+      <section class="card">
+        <h2>Results</h2>
+        <p id="status">No results yet.</p>
+        <div class="actions">
+          <button id="download-json" type="button" disabled>Download JSON</button>
+        </div>
+        <div class="table-wrap">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Partner</th>
+                <th>Location</th>
+                <th>Solutions Designations</th>
+                <th>Support Designations</th>
+                <th>Training Designations</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
